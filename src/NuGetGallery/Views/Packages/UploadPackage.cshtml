@@ -12,6 +12,19 @@
 }
 
 <section role="main" class="container main-container page-upload">
+    @if (Model != null && Model.RecaptchaEnabled)
+    {
+        // force a load of the reCAPTCHA client for later template use.
+        <script type="text/javascript">
+            grecaptcha.ready(function () {
+                grecaptcha.render("recaptcha", {});
+            });
+        </script>
+    }
+    else
+    {
+        <div id="huh"></div>
+    }
     <div class="row">
         <div class="@ViewHelpers.GetColumnClasses(ViewBag)">
             @ViewHelpers.AjaxAntiForgeryToken(Html)

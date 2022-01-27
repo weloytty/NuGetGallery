@@ -42,7 +42,7 @@
 
     <div id="submit-package-container">
     </div>
-    @if(Model != null && Model.InProgressUpload != null && Model.InProgressUpload.RecaptchaEnabled)
+    @if(Model != null && Model.RecaptchaEnabled)
     {
         <script type="text/javascript">RecaptchaEnabled = true;</script>
         <script type="text/html" id="submit-package-template">
