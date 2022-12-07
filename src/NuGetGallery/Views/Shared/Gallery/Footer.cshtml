@@ -54,11 +54,12 @@
 
                                 <a href="@Url.About()">About</a> -
                                 <a href="@Url.Terms()">Terms of Use</a> -
-                                <a href="@Url.Privacy()" id="footer-privacy-policy-link">Privacy Policy</a>
+                                <a href="@Url.Privacy()" id="footer-privacy-policy-link">Privacy Policy</a> -
                                 @if (!String.IsNullOrEmpty(this.Config.Current.TrademarksUrl))
                                 {
-                                    @:- <a href="@this.Config.Current.TrademarksUrl">Trademarks</a>
+                                    @:<a href="@this.Config.Current.TrademarksUrl">Trademarks</a> -
                                 }
+                                <a href="https://visualstudio.microsoft.com/careers/?utm_source=nugetorg">Work with us!</a>
                                 <br />
                             </p>
                         </div>
