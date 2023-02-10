@@ -298,13 +298,15 @@ namespace NuGetGallery
                     }
 
                     usedMultiFactorAuthentication = result.LoginDetails?.WasMultiFactorAuthenticated ?? false;
-                    var enableMultiFactorAuthentication = _featureFlagService.IsNewAccount2FAEnforcementEnabled() ? true : usedMultiFactorAuthentication;
+                    var configuredToUseMultiFactorAuthentiation = _featureFlagService.IsNewAccount2FAEnforcementEnabled()
+                        && !_contentObjectService.LoginDiscontinuationConfiguration.IsEmailOnExceptionsList(model.Register.EmailAddress);
+
                     user = await _authService.Register(
                         model.Register.Username,
                         model.Register.EmailAddress,
                         result.Credential,
                         autoConfirm: (result.Credential.IsExternal() && string.Equals(result.UserInfo?.Email, model.Register.EmailAddress)),
-                        enableMultiFactorAuthentication: enableMultiFactorAuthentication);
+                        enableMultiFactorAuthentication: usedMultiFactorAuthentication || configuredToUseMultiFactorAuthentiation);
                 }
                 else
                 {
@@ -651,7 +653,10 @@ namespace NuGetGallery
 
                 return SafeRedirect(returnUrl);
             }
-            else if (_featureFlagService.IsNewAccount2FAEnforcementEnabled() && CredentialTypes.IsExternal(result.Credential) && !result.LoginDetails.WasMultiFactorAuthenticated)
+            else if (_featureFlagService.IsNewAccount2FAEnforcementEnabled()
+                     && CredentialTypes.IsExternal(result.Credential)
+                     && !result.LoginDetails.WasMultiFactorAuthenticated
+                     && !_contentObjectService.LoginDiscontinuationConfiguration.IsEmailOnExceptionsList(result.LoginDetails.EmailUsed))
             {
                 // Invoke the authentication again enforcing multi-factor authentication for the same provider.
                 return ChallengeAuthentication(

@@ -394,7 +394,8 @@ namespace NuGetGallery
             return _client.IsEnabled(NuGetAccountPasswordLoginFeatureName, defaultValue: true);
         }
 
-        public bool IsFrameworkFilteringEnabled(User user) {
+        public bool IsFrameworkFilteringEnabled(User user)
+        {
             return _client.IsEnabled(FrameworkFilteringFeatureName, user, defaultValue: false);
         }
     }
