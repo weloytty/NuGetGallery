@@ -312,6 +312,47 @@
         return true;
     };
 
+    nuget.confirmHtml = function (message, confirmCaption, cancelCaption, onConfirm, onCancel) {
+        const rootElement = document.createElement('div');
+        rootElement.classList.add('modal', 'fade');
+        rootElement.role = 'dialog';
+        rootElement.innerHTML = `
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-body">
+                    ${message}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">${cancelCaption ? cancelCaption : "Cancel"}</button>
+                    <button type="button" class="btn btn-primary">${confirmCaption ? confirmCaption : "OK"}</button>
+                </div>
+            </div>
+        </div>`;
+
+        const bodyElement = document.getElementsByTagName('body')[0];
+        bodyElement.appendChild(rootElement);
+        $(rootElement).modal({});
+        const cancelButton = rootElement.getElementsByClassName('btn-default')[0];
+        cancelButton.focus();
+        const confirmButton = rootElement.getElementsByClassName('btn-primary')[0];
+
+        confirmButton.addEventListener('click', function () {
+            $(rootElement).modal('hide');
+            if (typeof(onConfirm) === 'function') {
+                onConfirm.call(globalThis);
+            }
+        });
+        cancelButton.addEventListener('click', function () {
+            $(rootElement).modal('hide');
+            if (typeof (onCancel) === 'function') {
+                onCancel.call(globalThis);
+            }
+        });
+        $(rootElement).on('hidden.bs.modal', function () {
+            bodyElement.removeChild(rootElement);
+        });
+    }
+
     nuget.commaJoin = function (items) {
         if (!items) {
             return '';
