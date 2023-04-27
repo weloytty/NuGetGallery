@@ -11,33 +11,27 @@ using Newtonsoft.Json;
 using NuGet.Services.Entities;
 using NuGet.Services.FeatureFlags;
 using NuGetGallery.Auditing;
-using NuGetGallery.Shared;
+using NuGetGallery.ContentStorageServices;
 
-namespace NuGetGallery.Features
+namespace NuGetGallery.Features 
 {
-    public class EditableFeatureFlagFileStorageService : FeatureFlagFileStorageService, IEditableFeatureFlagStorageService
+    public class EditableFeatureFlagFileStorageService : EditableContentFileStorageService<FeatureFlags>, IEditableFeatureFlagStorageService, IFeatureFlagStorageService
     {
         private const int MaxRemoveUserAttempts = 3;
 
-        private readonly IAuditingService _auditing;
         private readonly ILogger<EditableFeatureFlagFileStorageService> _logger;
 
         public EditableFeatureFlagFileStorageService(
             ICoreFileStorageService storage,
             IAuditingService auditing,
-            ILogger<EditableFeatureFlagFileStorageService> logger) : base(storage)
-        {
-            _auditing = auditing ?? throw new ArgumentNullException(nameof(auditing));
+            ILogger<EditableFeatureFlagFileStorageService> logger) : base(storage, auditing)
+        {            
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<FeatureFlagReference> GetReferenceAsync()
+        public async Task<FeatureFlags> GetAsync()
         {
-            var reference = await _storage.GetFileReferenceAsync(CoreConstants.Folders.ContentFolderName, CoreConstants.FeatureFlagsFileName);
-
-            return new FeatureFlagReference(
-                ReadFeatureFlagsFromStream(reference.OpenRead()),
-                reference.ContentId);
+            return await GetAsync(CoreConstants.FeatureFlagsFileName);
         }
 
         public async Task RemoveUserAsync(User user)
@@ -69,7 +63,7 @@ namespace NuGetGallery.Features
                            f => f.Key,
                            f => RemoveUser(f.Value, user)));
 
-                var saveResult = await TrySaveAsync(result, reference.ContentId);
+                var saveResult = await TrySaveAsync(result, reference.ContentId, CoreConstants.FeatureFlagsFileName);
                 if (saveResult == ContentSaveResult.Ok)
                 {
                     return;
@@ -83,45 +77,7 @@ namespace NuGetGallery.Features
             }
 
             throw new InvalidOperationException($"Unable to remove user from feature flags after {MaxRemoveUserAttempts} attempts");
-        }
-
-        public async Task<ContentSaveResult> TrySaveAsync(FeatureFlags flags, string contentId)
-        {
-            var result = await TrySaveInternalAsync(flags, contentId);
-            await _auditing.SaveAuditRecordAsync(
-                new FeatureFlagsAuditRecord(
-                    AuditedFeatureFlagsAction.Update, 
-                    flags, 
-                    contentId, 
-                    result));
-
-            return result;
-        }
-
-        private async Task<ContentSaveResult> TrySaveInternalAsync(FeatureFlags flags, string contentId)
-        {
-            var accessCondition = AccessConditionWrapper.GenerateIfMatchCondition(contentId);
-
-            try
-            {
-                using (var stream = new MemoryStream())
-                using (var writer = new StreamWriter(stream))
-                using (var jsonWriter = new JsonTextWriter(writer))
-                {
-                    Serializer.Serialize(jsonWriter, flags);
-                    jsonWriter.Flush();
-                    stream.Position = 0;
-
-                    await _storage.SaveFileAsync(CoreConstants.Folders.ContentFolderName, CoreConstants.FeatureFlagsFileName, stream, accessCondition);
-
-                    return ContentSaveResult.Ok;
-                }
-            }
-            catch (StorageException e) when (e.IsPreconditionFailedException())
-            {
-                return ContentSaveResult.Conflict;
-            }
-        }
+        }        
 
         private Flight RemoveUser(Flight flight, User user)
         {
@@ -130,6 +86,6 @@ namespace NuGetGallery.Features
                 flight.SiteAdmins,
                 flight.Accounts.Where(a => !a.Equals(user.Username, StringComparison.OrdinalIgnoreCase)).ToList(),
                 flight.Domains);
-        }
+        }        
     }
 }

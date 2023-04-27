@@ -10,29 +10,22 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Newtonsoft.Json;
-using NuGetGallery.Shared;
+using NuGetGallery.Auditing;
+using NuGetGallery.ContentStorageServices;
 
 namespace NuGetGallery.Login
 {
-    public class EditableLoginConfigurationFileStorageService : LoginDiscontinuationFileStorageService, IEditableLoginConfigurationFileStorageService
+    public class EditableLoginConfigurationFileStorageService : EditableContentFileStorageService<LoginDiscontinuation>, IEditableLoginConfigurationFileStorageService
     {
         private const int MaxAttempts = 3;
         private readonly ILogger<EditableLoginConfigurationFileStorageService> _logger;
 
         public EditableLoginConfigurationFileStorageService(
             ICoreFileStorageService storage,
-            ILogger<EditableLoginConfigurationFileStorageService> logger) : base(storage)
+            IAuditingService auditing,
+            ILogger<EditableLoginConfigurationFileStorageService> logger) : base(storage, auditing)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
-
-        public async Task<LoginDiscontinuationReference> GetReferenceAsync()
-        {
-            var reference = await _storage.GetFileReferenceAsync(CoreConstants.Folders.ContentFolderName, CoreConstants.LoginDiscontinuationConfigFileName);
-
-            return new LoginDiscontinuationReference(
-                ReadLoginDiscontinuationFromStream(reference.OpenRead()),
-                reference.ContentId);
         }
 
         public async Task AddUserEmailAddressforPasswordAuthenticationAsync(string emailAddress, bool add)
@@ -46,7 +39,7 @@ namespace NuGetGallery.Login
                 using (var streamReader = new StreamReader(stream))
                 using (var reader = new JsonTextReader(streamReader))
                 {
-                    logins = _serializer.Deserialize<LoginDiscontinuation>(reader);
+                    logins = Serializer.Deserialize<LoginDiscontinuation>(reader);
                 }
 
                 var exceptionsForEmailAddresses = logins.ExceptionsForEmailAddresses;
@@ -62,7 +55,6 @@ namespace NuGetGallery.Login
                 else
                 {
                     if (!logins.ExceptionsForEmailAddresses.Contains(emailAddress))
-
                     {
                         return;
                     }
@@ -77,12 +69,12 @@ namespace NuGetGallery.Login
                    logins.EnabledOrganizationAadTenants,
                    logins.IsPasswordDiscontinuedForAll);
 
-                var saveResult = await TrySaveAsync(result, reference.ContentId);
+                var saveResult = await TrySaveAsync(result, reference.ContentId, CoreConstants.LoginDiscontinuationConfigFileName);
                 if (saveResult == ContentSaveResult.Ok)
                 {
                     return;
                 }
-                
+
                 var operation = add ? "add" : "remove";
                 _logger.LogWarning(
                     "Failed to {operation} emailAddress from exception list, attempt {Attempt} of {MaxAttempts}...",
@@ -94,43 +86,11 @@ namespace NuGetGallery.Login
             throw new InvalidOperationException($"Unable to add/remove emailAddress from exception list after {MaxAttempts} attempts");
         }
 
-        public async Task<ContentSaveResult> TrySaveAsync(LoginDiscontinuation loginDiscontinuation, string contentId)
-        {
-            var result = await TrySaveInternalAsync(loginDiscontinuation, contentId);
-
-            return result;
-        }
-
         public async Task<IReadOnlyList<string>> GetListOfExceptionEmailList()
-        {       
-            var loginDiscontinuation = await GetAsync();
+        {
+            var loginDiscontinuation = await GetAsync(CoreConstants.LoginDiscontinuationConfigFileName);
 
             return loginDiscontinuation.ExceptionsForEmailAddresses.ToList();
-        }
-
-        private async Task<ContentSaveResult> TrySaveInternalAsync(LoginDiscontinuation loginDiscontinuationConfig, string contentId)
-        {
-            var accessCondition = AccessConditionWrapper.GenerateIfMatchCondition(contentId);
-
-            try
-            {
-                using (var stream = new MemoryStream())
-                using (var writer = new StreamWriter(stream))
-                using (var jsonWriter = new JsonTextWriter(writer))
-                {
-                    _serializer.Serialize(jsonWriter, loginDiscontinuationConfig);
-                    jsonWriter.Flush();
-                    stream.Position = 0;
-
-                    await _storage.SaveFileAsync(CoreConstants.Folders.ContentFolderName, CoreConstants.LoginDiscontinuationConfigFileName, stream, accessCondition);
-
-                    return ContentSaveResult.Ok;
-                }
-            }
-            catch (StorageException e) when (e.IsPreconditionFailedException())
-            {
-                return ContentSaveResult.Conflict;
-            }
         }
     }
 }

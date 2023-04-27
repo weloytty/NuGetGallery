@@ -113,7 +113,7 @@ namespace NuGetGallery.Areas.Admin.Controllers
 
         private async Task<string> GetContentIdBeforeChange()
         {
-            var result = await _storage.GetReferenceAsync(); 
+            var result = await _storage.GetReferenceAsync(CoreConstants.FeatureFlagsFileName); 
             return result.ContentId;
         }
 

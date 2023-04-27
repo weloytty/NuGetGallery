@@ -5,7 +5,7 @@ using System;
 using NuGet.Services.FeatureFlags;
 using NuGetGallery.Auditing.AuditedEntities;
 using NuGetGallery.Features;
-using NuGetGallery.Shared;
+using NuGetGallery.ContentStorageServices;
 
 namespace NuGetGallery.Auditing
 {

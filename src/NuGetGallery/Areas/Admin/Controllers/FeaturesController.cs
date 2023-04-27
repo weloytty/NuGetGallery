@@ -10,7 +10,7 @@ using NuGet.Services.FeatureFlags;
 using NuGetGallery.Areas.Admin.ViewModels;
 using NuGetGallery.Configuration;
 using NuGetGallery.Features;
-using NuGetGallery.Shared;
+using NuGetGallery.ContentStorageServices;
 
 namespace NuGetGallery.Areas.Admin.Controllers
 {
@@ -193,7 +193,7 @@ namespace NuGetGallery.Areas.Admin.Controllers
                 model.Features.ToDictionary(f => f.Name, f => f.Status),
                 model.Flights.ToDictionary(f => f.Name, f => f.AsFlight()));
 
-            var result = await _storage.TrySaveAsync(flags, contentId);
+            var result = await _storage.TrySaveAsync(flags, contentId, CoreConstants.FeatureFlagsFileName);
 
             switch (result)
             {
@@ -222,7 +222,7 @@ namespace NuGetGallery.Areas.Admin.Controllers
 
         private async Task<FeatureFlagsViewModel> GetModel()
         {
-            var reference = await _storage.GetReferenceAsync();
+            var reference = await _storage.GetReferenceAsync(CoreConstants.FeatureFlagsFileName);
             var lastUpdated = _cache.GetRefreshTimeOrNull();
 
             TimeSpan? timeSinceLastRefresh = null;
@@ -235,8 +235,8 @@ namespace NuGetGallery.Areas.Admin.Controllers
             {
                 TimeSinceLastRefresh = timeSinceLastRefresh,
                 RefreshInterval = _config.FeatureFlagsRefreshInterval,
-                Features = GetFeaturesFromFlags(reference.Flags),
-                Flights = GetFlightsFromFlags(reference.Flags),
+                Features = GetFeaturesFromFlags(reference.Content),
+                Flights = GetFlightsFromFlags(reference.Content),
                 ContentId = reference.ContentId
             };
         }

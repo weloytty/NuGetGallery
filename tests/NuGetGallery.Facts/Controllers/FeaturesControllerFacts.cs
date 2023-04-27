@@ -12,9 +12,9 @@ using NuGet.Services.FeatureFlags;
 using NuGetGallery.Areas.Admin.Controllers;
 using NuGetGallery.Areas.Admin.ViewModels;
 using NuGetGallery.Configuration;
+using NuGetGallery.ContentStorageServices;
 using NuGetGallery.Features;
 using NuGetGallery.Framework;
-using NuGetGallery.Shared;
 using Xunit;
 
 namespace NuGetGallery.Controllers
@@ -569,7 +569,8 @@ namespace NuGetGallery.Controllers
                 GetMock<IEditableFeatureFlagStorageService>()
                     .Setup(x => x.TrySaveAsync(
                         It.Is<FeatureFlags>(f => DoFlagsMatch(flags, f)),
-                        model.ContentId))
+                        model.ContentId,
+                        CoreConstants.FeatureFlagsFileName))
                     .ReturnsAsync(ContentSaveResult.Ok);
 
                 // Act
@@ -635,7 +636,8 @@ namespace NuGetGallery.Controllers
                 GetMock<IEditableFeatureFlagStorageService>()
                     .Setup(x => x.TrySaveAsync(
                         It.IsAny<FeatureFlags>(),
-                        validModel.ContentId))
+                        validModel.ContentId,
+                        CoreConstants.FeatureFlagsFileName))
                     .ReturnsAsync(saveResult);
 
                 // Act
@@ -762,8 +764,8 @@ namespace NuGetGallery.Controllers
             protected void SetupGetModel(bool hasLastUpdated)
             {
                 GetMock<IEditableFeatureFlagStorageService>()
-                    .Setup(x => x.GetReferenceAsync())
-                    .ReturnsAsync(new FeatureFlagReference(Flags, ContentId));
+                    .Setup(x => x.GetReferenceAsync(CoreConstants.FeatureFlagsFileName))
+                    .ReturnsAsync(new ContentReference<FeatureFlags>(Flags, ContentId));
 
                 GetMock<IFeatureFlagCacheService>()
                     .Setup(x => x.GetRefreshTimeOrNull())

@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 using NuGet.Services.Entities;
 using NuGet.Services.FeatureFlags;
 using NuGetGallery.Auditing;
-using NuGetGallery.Shared;
+using NuGetGallery.ContentStorageServices;
 using Xunit;
 
 namespace NuGetGallery.Features
@@ -109,10 +109,10 @@ namespace NuGetGallery.Features
                     .ReturnsAsync(BuildFileReference(ExampleJson, "bar"));
 
                 // Act
-                var result = await _target.GetReferenceAsync();
+                var result = await _target.GetReferenceAsync(CoreConstants.FeatureFlagsFileName);
 
                 // Assert - the flags should be formatted
-                AssertExample(result.Flags);
+                AssertExample(result.Content);
                 Assert.Equal("bar", result.ContentId);
 
                 _storage
@@ -130,7 +130,7 @@ namespace NuGetGallery.Features
                     .ReturnsAsync(BuildFileReference("bad content", "bar"));
 
                 // Act & Assert
-                await Assert.ThrowsAsync<JsonReaderException>(() => _target.GetReferenceAsync());
+                await Assert.ThrowsAsync<JsonReaderException>(() => _target.GetReferenceAsync(CoreConstants.FeatureFlagsFileName));
             }
         }
     
@@ -142,7 +142,7 @@ namespace NuGetGallery.Features
                 var contentId = "123";
 
                 // Act
-                var result = await _target.TrySaveAsync(Example, contentId);
+                var result = await _target.TrySaveAsync(Example, contentId, CoreConstants.FeatureFlagsFileName);
 
                 // Assert - the saved JSON should be formatted
                 Assert.Equal(ContentSaveResult.Ok, result);
@@ -193,7 +193,7 @@ namespace NuGetGallery.Features
                 var contentId = "123";
 
                 // Act
-                var result = await _target.TrySaveAsync(Example, contentId);
+                var result = await _target.TrySaveAsync(Example, contentId, CoreConstants.FeatureFlagsFileName);
 
                 // Assert - the saved JSON should be formatted
                 Assert.Equal(ContentSaveResult.Ok, result);
@@ -240,7 +240,7 @@ namespace NuGetGallery.Features
                 var contentId = "123";
 
                 // Act
-                var result = await _target.TrySaveAsync(Example, contentId);
+                var result = await _target.TrySaveAsync(Example, contentId, CoreConstants.FeatureFlagsFileName);
 
                 // Assert
                 Assert.Equal(ContentSaveResult.Conflict, result);

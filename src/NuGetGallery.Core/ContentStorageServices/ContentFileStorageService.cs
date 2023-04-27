@@ -1,23 +1,21 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using NuGet.Services.FeatureFlags;
 
-namespace NuGetGallery.Features
+namespace NuGetGallery.ContentStorageServices
 {
-    public class FeatureFlagFileStorageService : IFeatureFlagStorageService
+    public class ContentFileStorageService<T> : IContentFileStorageService<T>
     {
         protected static readonly JsonSerializer Serializer;
 
         protected readonly ICoreFileStorageService _storage;
-
-        static FeatureFlagFileStorageService()
+        
+        static ContentFileStorageService()
         {
             Serializer = JsonSerializer.Create(new JsonSerializerSettings
             {
@@ -30,26 +28,25 @@ namespace NuGetGallery.Features
             });
         }
 
-        public FeatureFlagFileStorageService(
-            ICoreFileStorageService storage)
+        public ContentFileStorageService(ICoreFileStorageService storage)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
         }
 
-        public async Task<FeatureFlags> GetAsync()
+        public async Task<T> GetAsync(string contentFileName)
         {
-            using (var stream = await _storage.GetFileAsync(CoreConstants.Folders.ContentFolderName, CoreConstants.FeatureFlagsFileName))
+            using (var stream = await _storage.GetFileAsync(CoreConstants.Folders.ContentFolderName, contentFileName))
             {
-                return ReadFeatureFlagsFromStream(stream);
+                return ReadContentFromStream(stream);
             }
         }
 
-        protected FeatureFlags ReadFeatureFlagsFromStream(Stream stream)
+        protected T ReadContentFromStream(Stream stream)
         {
             using (var streamReader = new StreamReader(stream))
             using (var reader = new JsonTextReader(streamReader))
             {
-                return Serializer.Deserialize<FeatureFlags>(reader);
+                return Serializer.Deserialize<T>(reader);
             }
         }
     }
