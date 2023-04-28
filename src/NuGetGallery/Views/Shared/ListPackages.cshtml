@@ -90,6 +90,15 @@
                                     {
                                         @AddFrameworkGroupOption(framework.ShortName, framework.DisplayName, framework.Tfms);
                                     }
+                                    <div class="toggle-switch" aria-label="AND/OR toggle that decides how multiple framework selections are combined in the search filters.">
+                                        <p>Combine multiple Framework and TFM selections with...</p>
+                                        <div class="toggle-switch-control">
+                                            <input type="radio" id="or-selector" name="and-or-selector" value="or" />
+                                            <label for="or-selector" onclick="" aria-label="Combine filters with OR to show packages targeting AT LEAST ONE of the selected Frameworks or TFMs.">OR</label>
+                                            <input type="radio" id="and-selector" name="and-or-selector" value="and" checked />
+                                            <label for="and-selector" onclick="" aria-label="Combine filters with AND to show packages targeting ALL of the selected Frameworks and TFMs.">AND</label>
+                                        </div>
+                                    </div>
                                 </fieldset>
                             </div>
                         }

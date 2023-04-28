@@ -130,6 +130,44 @@
         list-style: none;
       }
     }
+
+    .toggle-switch {
+      float: right;
+      padding-top: 10px;
+      padding-bottom: 0px;
+
+      p {
+        margin: 0px;
+        float: left;
+        width: 50%;
+        font-weight: 400;
+        font-size: small;
+      }
+
+      .toggle-switch-control {
+        float: right;
+        width: 50%;
+        vertical-align: middle;
+      }
+
+      input {
+        opacity: 0;
+      }
+
+      label {
+        float: right;
+        padding: 7px;
+        margin: 0px;
+        vertical-align: middle;
+        color: #fff;
+        background-color: rgb(142, 156, 202);
+        cursor: pointer;
+      }
+
+      input:checked + label {
+        background-color: rgb(70, 101, 201);
+      }
+    }
   }
 
   @media (min-width: @screen-sm) {
