@@ -1938,9 +1938,12 @@ p.frameworktableinfo-text {
 }
 .page-list-packages .advanced-search-panel .toggle-switch input {
   opacity: 0;
+  width: 0px;
 }
 .page-list-packages .advanced-search-panel .toggle-switch label {
   float: right;
+  text-align: center;
+  width: 45px;
   padding: 7px;
   margin: 0px;
   vertical-align: middle;
