@@ -10,7 +10,7 @@ param (
     [string]$PackageSuffix,
     [string]$Branch,
     [string]$CommitSHA,
-    [string]$BuildBranchCommit = '65e723253187442f5b8ea537f672bd9328ade5a7',
+    [string]$BuildBranchCommit = '65e723253187442f5b8ea537f672bd9328ade5a7', # DevSkim: ignore DS173237. It's a commit hash.
     [string]$VerifyMicrosoftPackageVersion = $null
 )
 
@@ -28,9 +28,6 @@ trap {
 if (-not (Test-Path "$PSScriptRoot/build")) {
     New-Item -Path "$PSScriptRoot/build" -ItemType "directory"
 }
-
-# Enable TLS 1.2 since GitHub requires it.
-[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 wget -UseBasicParsing -Uri "https://raw.githubusercontent.com/NuGet/ServerCommon/$BuildBranchCommit/build/init.ps1" -OutFile "$PSScriptRoot/build/init.ps1"
 . "$PSScriptRoot/build/init.ps1" -BuildBranchCommit $BuildBranchCommit
