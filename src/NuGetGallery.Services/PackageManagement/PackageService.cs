@@ -239,7 +239,7 @@ namespace NuGetGallery
                 includePackageRegistration: includePackageRegistration,
                 includeUser: false,
                 includeSymbolPackages: false,
-                includeDeprecation: false,
+                includeDeprecation: true,
                 includeDeprecationRelationships: false);
 
             return packages.ToList();
